@@ -3,9 +3,9 @@
 </script>
 
 <template>
-  <div>
-    <RouterView/>
-  </div>
+<div>
+  yousef
+</div>
 </template>
 
 <style scoped>
