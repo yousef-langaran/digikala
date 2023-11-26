@@ -42,24 +42,14 @@ async function imageToText(imageLink){
   })
 }
 async function getImages(url) {
-  await axios.get(url,{
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Content-Type': 'application/json',
-    },
-  }).then(async (res)=>{
+  await axios.get(url).then(async (res)=>{
     await setData(res.data)
   })
 }
 
 async function setData(hasan){
   for (const i in hasan.data.products) {
-    await axios.get(`https://api.digikala.com/v2/product/${hasan.data.products[i].id}/`,{
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
-    }).then(async (res) => {
+    await axios.get(`https://api.digikala.com/v2/product/${hasan.data.products[i].id}/`).then(async (res) => {
       for (const j in res.data.data.product.images.list) {
         if (extractFilenameFromURL(res.data.data.product.images.main.url).split("_")[1]){
           if(extractFilenameFromURL(res.data.data.product.images.main.url).split("_")[1]?.substring(0,4) !== extractFilenameFromURL(res.data.data.product.images.list[j].url)?.split("_")[1]?.substring(0,4)){
