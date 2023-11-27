@@ -6,6 +6,7 @@ const index = ref(0)
 const toIndex = ref(100)
 const api = ref('')
 const texts = ref([])
+const sort = ref('')
 const toDataURL = async (url) =>
     await fetch(url)
         .then(response => response.blob())
@@ -51,25 +52,26 @@ async function setData(hasan){
   for (const i in hasan.data.products) {
     await axios.get(`https://api.digikala.com/v2/product/${hasan.data.products[i].id}/`).then(async (res) => {
       for (const j in res.data.data.product.images.list) {
-        if (extractFilenameFromURL(res.data.data.product.images.main.url).split("_")[1]){
-          if(extractFilenameFromURL(res.data.data.product.images.main.url).split("_")[1]?.substring(0,4) !== extractFilenameFromURL(res.data.data.product.images.list[j].url)?.split("_")[1]?.substring(0,4)){
-            images.value.push(res.data.data.product.images.list[j].url)
-            await toDataURL(res.data.data.product.images.list[j].url).then(async (dataUrl) => {
-              var fileData = dataURLtoFile(dataUrl, "imageName.jpg");
-              // await imageToText(fileData)
-            })
-          }
+        if (!checkImage(res.data.data.seo.markup_schema[0].images,res.data.data.product.images.list[j].url)){
+          images.value.push({
+           image : res.data.data.product.images.list[j].url,
+            dkp: res.data.data.product.id
+          })
         }
-        else{
-          images.value.push(res.data.data.product.images.list[j].url)
-          console.log(extractFilenameFromURL(res.data.data.product.images.main.url))
-        }
-
+            // await toDataURL(res.data.data.product.images.list[j].url).then(async (dataUrl) => {
+            //   var fileData = dataURLtoFile(dataUrl, "imageName.jpg");
+            //   // await imageToText(fileData)
+            // })
       }
     })
   }
 }
-
+// https://www.digikala.com/search/category-hair-care/
+// https://api.digikala.com/v1/categories/hair-care/search/?seo_url=&page=1
+function checkImage(imageList,image){
+  let containsSubstring = imageList.some(item => item.includes(image.toString().split('?')[0]));
+  return containsSubstring
+}
 function extractFilenameFromURL(url) {
   // جدا کردن بخش فایل از URL با استفاده از split('/')
   const parts = url.toString().split('/');
@@ -83,11 +85,10 @@ function extractFilenameFromURL(url) {
 
 async function getData() {
   for (let i = index.value; i< toIndex.value; i++){
-    await getImages(`${api.value}${i}`)
+    await getImages(`${api.value.toString().split('?')[0]}?page=${i}&sort=${sort.value}`)
     index.value++
   }
 }
-
 </script>
 
 <template>
@@ -107,10 +108,25 @@ async function getData() {
       <label>تا صفحه</label>
       <input type="number" v-model="toIndex">
     </div>
+    <div>
+      <label>مرتب سازی</label>
+      <select v-model="sort">
+        <option value="22">مرتبط ترین</option>
+        <option value="4">پربازدید ترین</option>
+        <option value="1">جدید ترین</option>
+        <option value="7">پرفروش ترین</option>
+        <option value="20">ارزان ترین</option>
+        <option value="21">گران ترین</option>
+        <option value="25">سریع ترین ارسال</option>
+        <option value="27">پیشنهاد خریداران</option>
+        <option value="29">متخب</option>
+      </select>
+    </div>
   </div>
   <div class="myMain">
-    <a v-for="image in images" :href="image" target="_blank">
-      <img loading="lazy" :src="image">
+    <a v-for="image in images" :href="image.image" target="_blank">
+      <span>{{image.dkp}}</span>
+      <img loading="lazy" :src="image.image">
     </a>
   </div>
   <div class="myButton" @click="getData">
@@ -149,6 +165,9 @@ input{
   font-size: 20px;
 }
 .myMain{
-  margin-top: 100px;
+  padding-top: 150px;
+}
+select{
+  height: 38px;
 }
 </style>
