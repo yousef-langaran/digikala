@@ -1,6 +1,8 @@
 <script setup>
 import axios from 'axios'
 import {ref} from 'vue'
+import {createWorker} from 'tesseract.js';
+
 const images = ref([])
 const index = ref(0)
 const toIndex = ref(100)
@@ -51,8 +53,10 @@ async function getImages(url) {
 async function setData(hasan){
   for (const i in hasan.data.products) {
     await axios.get(`https://api.digikala.com/v2/product/${hasan.data.products[i].id}/`).then(async (res) => {
+      console.log(res)
       for (const j in res.data.data.product.images.list) {
-        if (!checkImage(res.data.data.seo.markup_schema[0].images,res.data.data.product.images.list[j].url)){
+        if (!checkImage(res.data.data.seo.markup_schema[0].image,res.data.data.product.images.list[j].url)){
+          await extractText(res.data.data.product.images.list[j].url)
           images.value.push({
            image : res.data.data.product.images.list[j].url,
             dkp: res.data.data.product.id
@@ -84,10 +88,20 @@ function extractFilenameFromURL(url) {
 }
 
 async function getData() {
+  const urlsss = api.value.toString().split('?')[0].split('/')
+  const category = urlsss[urlsss.length - 2] || urlsss[urlsss.length - 1]
+  const apis = `https://api.digikala.com/v1/categories/${category}/search/?page=1`
   for (let i = index.value; i< toIndex.value; i++){
-    await getImages(`${api.value.toString().split('?')[0]}?page=${i}&sort=${sort.value}`)
+    await getImages(`${apis}?page=${i}&sort=${sort.value}`)
     index.value++
   }
+}
+
+const extractText = async (imageUrl) => {
+    const worker = await createWorker('eng');
+    const ret = await worker.recognize(imageUrl);
+    console.log(ret.data.text);
+    await worker.terminate();
 }
 </script>
 
